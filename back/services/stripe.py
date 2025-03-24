@@ -8,7 +8,7 @@ def create_checkout(reference, name, unit_price, quantity, confirmation_secret):
         Documentation: https://docs.stripe.com/checkout/quickstart?client=react&lang=python
     """
     
-    stripe.api_key = "rk_test_51RhVfI2aoAWLbEQqd67veWGXyEfUURYFN5oILPW0kVLEMbAHX7jg7581yVSeggp04xRaDFE68JmDZVIDZCNSWE0X008r1rAkXU"
+    stripe.api_key = os.getenv('STRIPE_API_KEY')
     origin_host = os.getenv('APP_ORIGIN_HOST')
     return stripe.checkout.Session.create(
         mode='payment',
@@ -32,5 +32,5 @@ def get_checkout_lines(checkout_session_id):
     url = f"https://api.stripe.com/v1/checkout/sessions/{checkout_session_id}/line_items"
 
     session = requests.Session()
-    session.auth = ("rk_test_51RhVfI2aoAWLbEQqd67veWGXyEfUURYFN5oILPW0kVLEMbAHX7jg7581yVSeggp04xRaDFE68JmDZVIDZCNSWE0X008r1rAkXU", "")
+    session.auth = (os.getenv('STRIPE_API_KEY'), "")
     return session.get(url).json()["data"]
