@@ -1,0 +1,27 @@
+services:
+  back:
+    image: python:3
+    working_dir: /app
+    command: bash -c "pip3 install -r requirements.txt && python3 app.py"
+    volumes:
+      - ./back:/app
+    environment:
+      APP_ORIGIN_HOST: http://localhost:9000
+      STRIPE_API_KEY: sk_test_51RhVfI2aoAWLbEQqUskEoID6RpBTEXO3hFAmubERuAbcYeWZ18m1yTRS9L3m9akdKowxs8lteAbxfIFwhrRiIkho00IWLuBOs3
+
+  front:
+    image: node:22
+    working_dir: /app
+    command: bash -c "npm install && npm run dev -- --host"
+    volumes:
+      - ./front:/app
+
+  apache:
+    image: httpd:latest
+    ports:
+      - 9000:80
+    volumes:
+      - ./apache/apache-dev.conf:/usr/local/apache2/conf/httpd.conf
+    depends_on:
+      - back
+      - front
