@@ -40,10 +40,15 @@ def get_booking_checkout_lines(reference: str):
     if not booking.is_paid:
         return {'error': 'Cannot get checkout lines without payment'}, 422
 
+    # On utilise l'ID de session stocké en base, pas celui envoyé par le client.
+    # Le front l'envoie encore, donc on l'accepte s'il est identique.
+    checkout_session_id = request.args.get("checkout_session_id")
+    if checkout_session_id is not None and checkout_session_id != booking.stripe_checkout_session_id:
+        return {'error': 'Invalid checkout session ID'}, 404
+
     try:
-        checkout_session_id = request.args.get("checkout_session_id")
-        return jsonify(get_checkout_lines(checkout_session_id))
-    except:
+        return jsonify(get_checkout_lines(booking.stripe_checkout_session_id))
+    except Exception:
         return {'error': 'Invalid checkout session ID'}, 404
 
 
