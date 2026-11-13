@@ -16,9 +16,16 @@ class User(db.Model):
         return f'<User {self.email!r}>'
     
     def to_dict(self):
+        # Version publique (affichée comme hôte sur les logements) : pas d'e-mail
         return {
             "id": self.id,
             "name": self.name,
+        }
+
+    def to_private_dict(self):
+        # Seulement pour l'utilisateur lui-même (/users/me)
+        return {
+            **self.to_dict(),
             "email": self.email,
         }
 
