@@ -9,6 +9,8 @@ services:
       APP_ORIGIN_HOST: http://localhost:9000
       # La clé est lue dans le fichier .env (non versionné), voir .env.example
       STRIPE_API_KEY: ${STRIPE_API_KEY:?STRIPE_API_KEY manquante, copier .env.example en .env}
+      # Debug désactivé par défaut, mettre FLASK_DEBUG=1 dans .env pour l'activer en local
+      FLASK_DEBUG: ${FLASK_DEBUG:-0}
 
   front:
     image: node:22

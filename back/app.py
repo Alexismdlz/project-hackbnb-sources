@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask_cors import CORS
 from database.init import db
@@ -38,9 +40,12 @@ def welcome():
    return "Welcome on API"
 
 
+# Serveur de développement uniquement (en prod : gunicorn, voir prod.entrypoint.sh).
+# Le mode debug affiche le code source et les chemins du serveur à chaque erreur,
+# il n'est donc activé que si on le demande explicitement avec FLASK_DEBUG=1.
 if __name__ == '__main__':
    app.run(
-      debug=True,
+      debug=os.getenv("FLASK_DEBUG") == "1",
       host="0.0.0.0",
       port=9001,
    )
