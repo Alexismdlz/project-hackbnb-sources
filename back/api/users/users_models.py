@@ -1,6 +1,6 @@
 from typing import List
-from hashlib import md5
 from database.init import db
+from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 class User(db.Model):
@@ -30,8 +30,10 @@ class User(db.Model):
         }
 
     def set_password(self, clear_password: str):
-        self.password_hash = md5(clear_password.encode("utf-8")).hexdigest()
-    
+        # Avant : md5 sans sel, cassable en quelques secondes avec une rainbow table.
+        # generate_password_hash utilise scrypt avec un sel aléatoire par utilisateur.
+        self.password_hash = generate_password_hash(clear_password)
+
     def is_valid_password(self, clear_password: str) -> bool:
-        clear_password_hash = md5(clear_password.encode("utf-8")).hexdigest()
-        return clear_password_hash == self.password_hash
+        # Comparaison en temps constant, le sel et l'algo sont lus dans le hash stocké
+        return check_password_hash(self.password_hash, clear_password)

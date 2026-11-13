@@ -8,12 +8,15 @@ def seed_database():
     if User.query.count() > 0 or Room.query.count() > 0:
       return
 
-    db.session.add(User(
+    # Compte de démo : le mot de passe passe par set_password pour être
+    # hashé correctement (avant : password_hash="XX" en dur)
+    john = User(
         id=1,
         name="John Doe",
         email="john@doe.com",
-        password_hash="XX",
-    ))
+    )
+    john.set_password("changeme")
+    db.session.add(john)
 
     db.session.add(Room(
         id=1,
