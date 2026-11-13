@@ -31,6 +31,20 @@ def create_checkout(reference, name, unit_price, quantity, confirmation_secret):
         ],
     )
 
+def is_checkout_paid(checkout_session_id):
+    """
+        Check with Stripe that the checkout session has been paid
+    """
+
+    stripe.api_key = os.getenv('STRIPE_API_KEY')
+    try:
+        session = stripe.checkout.Session.retrieve(checkout_session_id)
+    except stripe.StripeError:
+        # Stripe injoignable ou session inconnue : on ne valide pas le paiement
+        return False
+
+    return session.payment_status == "paid"
+
 CHECKOUT_SESSION_ID = re.compile(r'^cs_(?:test|live)_[A-Za-z0-9]+$')
 
 def get_checkout_lines(checkout_session_id):

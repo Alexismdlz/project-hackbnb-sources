@@ -1,13 +1,12 @@
-import time
-import hashlib
+import hmac
 import string
-import random
+import secrets
 from datetime import date
 from flask import jsonify, Blueprint, request
 
 from database.init import db
 from api.rooms.rooms_models import Room
-from services.stripe import create_checkout, get_checkout_lines
+from services.stripe import create_checkout, get_checkout_lines, is_checkout_paid
 from .bookings_models import Booking
 from sqlalchemy.orm import joinedload
 
@@ -93,11 +92,13 @@ def new_booking():
     booking_price = room.price * booking_duration_in_days
 
     # Generate random booking reference
-    booking_reference = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+    # secrets plutôt que random : random n'est pas fait pour la sécurité
+    booking_reference = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
 
     # Generate random confirmation secret
-    random_string = str(int(time.time())) # get current timestamp in seconds
-    checkout_confirmation_secret = hashlib.sha512(random_string.encode('utf-8')).hexdigest() # hash it with safe sha512
+    # Avant c'était sha512(timestamp) : il suffisait de connaître l'heure de la
+    # réservation pour le recalculer. Là c'est 32 octets vraiment aléatoires.
+    checkout_confirmation_secret = secrets.token_urlsafe(32)
 
     # Create Stripe checkout session
     checkout_session = create_checkout(
@@ -140,8 +141,13 @@ def confirm_booking_checkout(reference: str):
     if not booking:
         return {'error': 'Booking not found'}, 404
     
-    if booking.checkout_confirmation_secret != request.json["confirmationSecret"]:
+    confirmation_secret = (request.get_json(silent=True) or {}).get("confirmationSecret")
+    if not isinstance(confirmation_secret, str) or not hmac.compare_digest(booking.checkout_confirmation_secret, confirmation_secret):
         return {'error': 'Invalid confirmation secret'}, 422
+
+    # Le secret ne prouve pas que le client a payé, on demande directement à Stripe
+    if not is_checkout_paid(booking.stripe_checkout_session_id):
+        return {'error': 'Payment not completed'}, 402
 
     booking.is_paid = True
     db.session.commit()
